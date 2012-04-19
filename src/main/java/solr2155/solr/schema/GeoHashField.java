@@ -19,7 +19,9 @@ package solr2155.solr.schema;
 
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.ngram.EdgeNGramTokenizer;
+import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Fieldable;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.spatial.DistanceUtils;
@@ -80,10 +82,19 @@ public class GeoHashField extends FieldType implements SpatialQueryable {
       }
     }, tokenFilterFactories);
     //(leave default queryAnalyzer -- single token)
+
+    //properties |= OMIT_NORMS;  //can't do this since properties isn't public/protected
   }
 
   public GridNode.GridReferenceSystem getGridReferenceSystem() {
     return gridReferenceSystem;
+  }
+
+  @Override
+  protected Fieldable createField(String name, String val, Field.Store storage, Field.Index index, Field.TermVector vec, boolean omitNorms, FieldInfo.IndexOptions options, float boost) {
+    Fieldable f = super.createField(name, val, storage, index, vec, omitNorms, options, boost);
+    f.setOmitNorms(true);
+    return f;
   }
 
   @Override
