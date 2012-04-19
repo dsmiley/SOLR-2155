@@ -23,6 +23,7 @@ import org.apache.lucene.index.TermDocs;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.solr.schema.FieldType;
 import org.apache.solr.search.FunctionQParser;
+import org.apache.solr.search.SolrIndexReader;
 import org.apache.solr.search.SolrIndexSearcher;
 import org.apache.solr.search.function.DocValues;
 import org.apache.solr.search.function.MultiValueSource;
@@ -67,7 +68,10 @@ public class GeoHashValueSource extends MultiValueSource {
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
-  //admittedly the List<Point2D> part isn't particularly memory efficient or kind to the GC.
+  /**
+   * A multi-value cache across the entire index (all Lucene segments).
+   * Admittedly the List<Point2D> part isn't particularly memory efficient or kind to the GC.
+   */
   private List<Point2D>[] doc2PointsCache;//index by doc id, then list of points
 
   @SuppressWarnings({"unchecked"})
@@ -143,6 +147,12 @@ public class GeoHashValueSource extends MultiValueSource {
 
   /** This class is public so that {@link #point2Ds(int)} is exposed. */
   public class GeoHashDocValues extends DocValues {
+    private final int docIdBase;
+
+    public GeoHashDocValues(int docIdBase) {
+      this.docIdBase = docIdBase;
+    }
+
     @Override
     public void doubleVal(int doc, double[] vals) {
       super.doubleVal(doc, vals);//TODO
@@ -152,10 +162,11 @@ public class GeoHashValueSource extends MultiValueSource {
      * Do NOT modify the returned array!  May return null.
      */
     public List<Point2D> point2Ds(int doc) {
+      //This cache is over the entire index (all Lucene segments).
       final List<Point2D>[] cache = GeoHashValueSource.this.doc2PointsCache;
       if (cache == null)
         return null;
-      return cache[doc];
+      return cache[docIdBase+doc];
     }
 
     @Override
@@ -173,11 +184,14 @@ public class GeoHashValueSource extends MultiValueSource {
     }
   }
 
-  private final GeoHashDocValues docValues = new GeoHashDocValues();
-
   @Override
   public GeoHashDocValues getValues(Map context, IndexReader reader) throws IOException {
-    return docValues;
+    int docIdBase = 0;
+    if (reader instanceof SolrIndexReader) {
+      SolrIndexReader solrIndexReader = (SolrIndexReader) reader;
+      docIdBase = solrIndexReader.getBase();
+    }
+    return new GeoHashDocValues(docIdBase);
   }
 
   @Override

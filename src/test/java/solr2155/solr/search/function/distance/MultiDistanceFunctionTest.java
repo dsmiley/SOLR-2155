@@ -79,6 +79,21 @@ public class MultiDistanceFunctionTest extends SolrTestCaseJ4 {
 			"d", "1000", "sfield", "store", "sort", "geodist() asc"),   "//doc[1]/str[@name='id']='2'");
 
   }
+  @Test
+  public void testSortMultiSegmentBug() throws Exception {
+    clearIndex();
+    assertU(adoc("id", "Denver, CO (SMD)",    "store", "39.740009,-104.992264"));
+    //assertU(adoc("id", "Denver, CO (MFNPA)",  "store", "39.728024,-104.990250"));
+    assertU(commit());//make a new segment
+    assertU(adoc("id", "San Antonio, TX",     "store", "31.436729,-99.306923"));
+    assertU(adoc("id", "Denver, CO (DSANDO)", "store", "39.718670,-104.988907"));
+    assertU(commit());
+
+    assertQ(req("fl", "*,score", "q", "*:*", "sfield", "store", "pt", "39.740112,-104.984856",
+            "d", "100", "sfield", "store", "sort", "geodist() asc"),
+            "//doc[position()=last()]/str[@name='id']='San Antonio, TX'"
+            );
+  }
 
   /** TODO propose that this go into Solr's test harness. */
   private void assertQScore(SolrQueryRequest req, int docIdx, float targetScore) throws Exception {
