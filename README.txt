@@ -13,4 +13,11 @@ Instructions:
         <queryParser name="gh_geofilt" class="solr2155.solr.search.SpatialGeoHashFilterQParser$Plugin" />
         <!-- replace built-in geodist() with our own modified one -->
         <valueSourceParser name="geodist" class="solr2155.solr.search.function.distance.HaversineConstFunction$HaversineValueSourceParser" />
+        
+      Add the following cache into <query> section if you are going to use geodist func
+          <cache name="fieldValueCache"
+            class="solr.FastLRUCache"
+            size="10"
+            initialSize="1"
+            autowarmCount="1"/>
 

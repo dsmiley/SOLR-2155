@@ -25,8 +25,8 @@ import solr2155.lucene.spatial.geometry.shape.Point2D;
 import solr2155.solr.search.function.GeoHashValueSource;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import static java.util.Collections.*;
 
 /**
  * Haversine function for use with {@link GeoHashValueSource} in which multiple points are supported.
@@ -80,11 +80,7 @@ public class HaversineMultiConstFunction extends ValueSource {
         double distance = 0.0; // this will be overlaid
         boolean firstLap = true;
         for (Point2D point : geoList) {
-          double lat = point.getY();
-          double lon = point.getX();
-          double latRad = lat * DistanceUtils.DEGREES_TO_RADIANS;
-          double lonRad = lon * DistanceUtils.DEGREES_TO_RADIANS;
-          double distanceNew = DistanceUtils.haversine(latCenterRad, lonCenterRad, latRad, lonRad, DistanceUtils.EARTH_MEAN_RADIUS_KM);
+          double distanceNew = distance(point);
           if ((firstLap) ||
               (asc == true && distanceNew < distance) ||
               (asc == false && distanceNew > distance)) {
@@ -95,13 +91,53 @@ public class HaversineMultiConstFunction extends ValueSource {
         return distance;
       }
 
+      private double distance(Point2D point) {
+        double lat = point.getY();
+        double lon = point.getX();
+        double latRad = lat * DistanceUtils.DEGREES_TO_RADIANS;
+        double lonRad = lon * DistanceUtils.DEGREES_TO_RADIANS;
+        double distanceNew = DistanceUtils.haversine(latCenterRad, lonCenterRad, latRad, lonRad, DistanceUtils.EARTH_MEAN_RADIUS_KM);
+        return distanceNew;
+      }
+
       public String strVal(int doc) {
         return Double.toString(doubleVal(doc));
       }
 
       @Override
       public String toString(int doc) {
-        return name() + '(' + ghDocVals.strVal(doc) + ',' + latCenter + ',' + lonCenter + ')';
+        int maxPoints = 3;
+        List<Point2D> geoList = ghDocVals.point2Ds(doc);
+        boolean truncated = false;
+
+        TreeMap<Double, Point2D> heap = new TreeMap<Double, Point2D>(
+            !asc ? reverseOrder() : reverseOrder(reverseOrder()));
+        for (Point2D p : geoList == null ? Collections.<Point2D>emptyList() : geoList) {
+          heap.put(distance(p), p);
+          if (!heap.isEmpty() && heap.size() > maxPoints) {
+            heap.remove(heap.lastKey());
+            truncated = true;
+          }
+        }
+        return name() + '(' + dump(heap.values()) +
+            (truncated ? "..." : "") +
+            ',' + latCenter + ',' + lonCenter + ')';
+      }
+
+      private StringBuilder dump(Collection<Point2D> points) {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (Point2D p : points) {
+          if (!first) {
+            sb.append(' ');
+          }
+          sb.append(p.getY());
+          sb.append(',');
+          sb.append(p.getX());
+
+          first = false;
+        }
+        return sb;
       }
     };
   }

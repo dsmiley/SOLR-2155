@@ -22,7 +22,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.spatial.DistanceUtils;
 import org.apache.lucene.spatial.tier.InvalidGeoException;
 import org.apache.solr.common.SolrException;
-import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.DefaultSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
@@ -52,8 +51,8 @@ import java.util.Arrays;
  * <li>Point-radius (AKA distance) / circle: point, radius. point is "lat,lon" and radius is the distance in meters
  * forming the circle.</li>
  * <li>Bounding box: box.  "west,south,east,north" in degrees</li>
- * <li>Polygon: polygon. See {@link JtsGeom#parsePolygon(String)}</li>
- * <li>WKT geometry: geometry. {@link JtsGeom#parseGeometry(String)}</li>
+ * <li>Polygon: polygon. NOT IMPLEMENTED</li>
+ * <li>WKT geometry: geometry. NOT IMPLEMENTED</li>
  * </ul>
  * NOTE: Polygon & WKT geometry require a separate module which in turn requires the LGPL licensed JTS library.
  */
@@ -70,7 +69,6 @@ public class SpatialGeoHashFilterQParser extends QParser {
 
     protected SolrParams defaultParams;
 
-    @Override
     public void init(NamedList args) {
       defaultParams = SolrParams.toSolrParams(args);
     }
@@ -85,10 +83,11 @@ public class SpatialGeoHashFilterQParser extends QParser {
 
   @Override
   public Query parse() throws ParseException {
-    String field = localParams.get("sfield");
+    final String SFIELD = "sfield";
+    String field = localParams.get(SFIELD);
     if (field == null)
       throw new SolrException(SolrException.ErrorCode.BAD_REQUEST,
-          CommonParams.FL + " is not properly specified");
+              SFIELD + " is not properly specified"+" in local params");
     SchemaField schemaField = req.getSchema().getField(field);
     final FieldType fieldType = schemaField.getType();
     if (!(fieldType instanceof GeoHashField))
