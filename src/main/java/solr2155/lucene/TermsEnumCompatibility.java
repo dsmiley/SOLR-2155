@@ -14,11 +14,16 @@ public class TermsEnumCompatibility {
   private final IndexReader reader;
   private final String fieldName;
   private TermEnum termEnum;
+  private boolean initialState = true;
 
   public TermsEnumCompatibility(IndexReader reader, String fieldName) throws IOException {
     this.reader = reader;
     this.fieldName = fieldName.intern();
     this.termEnum = reader.terms(new Term(this.fieldName));
+  }
+
+  public TermEnum getTermEnum() {
+    return termEnum;
   }
 
   public Term term() {
@@ -27,7 +32,17 @@ public class TermsEnumCompatibility {
   }
 
   public Term next() throws IOException {
-    return termEnum.next() ? term() : null;
+    //in Lucene 3, a call to reader.terms(term) is already pre-positioned, you don't call next first
+    if (initialState) {
+      initialState = false;
+      return term();
+    } else {
+      return termEnum.next() ? term() : null;
+    }
+  }
+
+  public void close() throws IOException {
+    termEnum.close();
   }
 
   public static enum SeekStatus {END, FOUND, NOT_FOUND}

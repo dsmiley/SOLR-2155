@@ -88,27 +88,32 @@ public class GeoHashValueSource extends MultiValueSource {
     IndexReader reader = searcher.getIndexReader();
     TermsEnumCompatibility termsEnum = new TermsEnumCompatibility(reader,fieldName);
     TermDocs termDocs = reader.termDocs(); //cached for termsEnum.docs() calls
-    while(true) {
-      final Term term = termsEnum.next();
-      if (term == null)
-        break;
-      if (term.text().length() != gridReferenceSystem.getPrecision())
-        continue;
-      Point2D point = gridReferenceSystem.decodeXY(term.text());
-      termDocs.seek(term);
-      while(termDocs.next()) {
-        final int docId = termDocs.doc();
-        if (docId == DocIdSetIterator.NO_MORE_DOCS)
+    try {
+      while(true) {
+        final Term term = termsEnum.next();
+        if (term == null)
           break;
-        if (doc2PointsCache == null)
-          doc2PointsCache = (List<Point2D>[]) new List[reader.maxDoc()];//java generics hack
-        List<Point2D> points = doc2PointsCache[docId];
-        if (points == null) {
-          points = new ArrayList<Point2D>(DEFAULT_ARRAY_CAPACITY);
-          doc2PointsCache[docId] = points;
+        if (term.text().length() != gridReferenceSystem.getPrecision())
+          continue;
+        Point2D point = gridReferenceSystem.decodeXY(term.text());
+        termDocs.seek(termsEnum.getTermEnum());
+        while(termDocs.next()) {
+          final int docId = termDocs.doc();
+          if (docId == DocIdSetIterator.NO_MORE_DOCS)
+            break;
+          if (doc2PointsCache == null)
+            doc2PointsCache = (List<Point2D>[]) new List[reader.maxDoc()];//java generics hack
+          List<Point2D> points = doc2PointsCache[docId];
+          if (points == null) {
+            points = new ArrayList<Point2D>(DEFAULT_ARRAY_CAPACITY);
+            doc2PointsCache[docId] = points;
+          }
+          points.add(point);
         }
-        points.add(point);
       }
+    } finally { // in Lucene 3 these should be closed (not in Lucene 4)
+      termDocs.close();
+      termsEnum.close();
     }
 
     //Log statistics
