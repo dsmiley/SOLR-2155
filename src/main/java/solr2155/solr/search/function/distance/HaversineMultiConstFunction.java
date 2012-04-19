@@ -69,23 +69,20 @@ public class HaversineMultiConstFunction extends ValueSource {
       }
 
       public double doubleVal(int doc) {
-        List<Point2D> geoList = ghDocVals.point2Ds(doc);
-        if (geoList == null) {
-          if (asc == false) {
-            return 0.0;
-          } else {
-            return DistanceUtils.EARTH_MEAN_RADIUS_KM;
-          }
+        double distance;
+        if (asc == false) {
+          distance = 0.0;
+        } else {
+          distance = DistanceUtils.EARTH_MEAN_RADIUS_KM * Math.PI;//v1.0.5
         }
-        double distance = 0.0; // this will be overlaid
-        boolean firstLap = true;
-        for (Point2D point : geoList) {
-          double distanceNew = distance(point);
-          if ((firstLap) ||
-              (asc == true && distanceNew < distance) ||
-              (asc == false && distanceNew > distance)) {
-            distance = distanceNew;
-            firstLap = false;
+        List<Point2D> geoList = ghDocVals.point2Ds(doc);
+        if (geoList != null) {
+          for (Point2D point : geoList) {
+            double distanceNew = distance(point);
+            if ((asc == true && distanceNew < distance) ||
+                    (asc == false && distanceNew > distance)) {
+              distance = distanceNew;
+            }
           }
         }
         return distance;
