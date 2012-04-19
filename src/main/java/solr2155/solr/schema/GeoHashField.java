@@ -64,7 +64,7 @@ import java.util.Map;
  */
 public class GeoHashField extends FieldType implements SpatialQueryable {
 
-  public static final int DEFAULT_LENGTH = GridNode.GridReferenceSystem.getMaxPrecision();//~12
+  public static final int DEFAULT_LENGTH = GridNode.GridReferenceSystem.getMaxPrecision();//~22
   private GridNode.GridReferenceSystem gridReferenceSystem;
 
   @Override
@@ -75,7 +75,6 @@ public class GeoHashField extends FieldType implements SpatialQueryable {
     CharFilterFactory[] filterFactories = new CharFilterFactory[0];
     TokenFilterFactory[] tokenFilterFactories = new TokenFilterFactory[0];
     analyzer = new TokenizerChain(filterFactories, new BaseTokenizerFactory() {
-      @Override
       public Tokenizer create(Reader input) {
         return new EdgeNGramTokenizer(input, EdgeNGramTokenizer.Side.FRONT, 1, Integer.MAX_VALUE);
       }
@@ -118,14 +117,14 @@ public class GeoHashField extends FieldType implements SpatialQueryable {
   }
 
   @Override
-  public String toExternal(Fieldable f) {
-    double[] xy = gridReferenceSystem.decodeXY(f);
-    return xy[1] + "," + xy[0];
+  public void write(XMLWriter xmlWriter, String name, Fieldable f) throws IOException {
+    xmlWriter.writeStr(name, toExternal(f));
   }
 
   @Override
-  public void write(XMLWriter xmlWriter, String name, Fieldable f) throws IOException {
-    xmlWriter.writeStr(name, f.stringValue());
+  public String toExternal(Fieldable f) {
+    double[] xy = gridReferenceSystem.decodeXY(f);
+    return xy[1] + "," + xy[0];
   }
 
   @Override

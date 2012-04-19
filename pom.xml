@@ -6,30 +6,40 @@
 
   <groupId>Solr2155</groupId>
   <artifactId>Solr2155</artifactId>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- FYI this project is compatible with all known Solr 3.x releases -->
+    <solr.version>3.5.0</solr.version>
   </properties>
 
+  <developers>
+    <developer>
+      <name>David Smiley</name>
+      <email>dsmiley@apache.org</email>
+    </developer>
+  </developers>
+
   <dependencies>
-    <dependency>
-      <groupId>org.apache.solr</groupId>
-      <artifactId>solr-core</artifactId>
-      <version>3.4.0</version>
-    </dependency>
 
     <dependency>
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-test-framework</artifactId>
-      <version>3.4.0</version>
+      <version>${solr.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-test-framework</artifactId>
-      <version>3.4.0</version>
+      <version>${solr.version}</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-core</artifactId>
+      <version>${solr.version}</version>
     </dependency>
 
   </dependencies>

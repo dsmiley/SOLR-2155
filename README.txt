@@ -1,6 +1,15 @@
 Author: David Smiley
 
+You may find supplemental instructions online:
+http://wiki.apache.org/solr/SpatialSearch#SOLR-2155
+
 Instructions:
+
+First, you will need to build the jar file from source if the jar wasn't provided.
+This is as simple as running "mvn install" which generates a jar file: target/Solr2155-1.0.3.jar
+Put that on Solr's classpath similar to how other Solr contrib jars are installed.
+
+Now edit some config files.
 
    schema.xml:
         <fieldType name="geohash" class="solr2155.solr.schema.GeoHashField" length="12" />
@@ -21,3 +30,18 @@ Instructions:
             initialSize="1"
             autowarmCount="1"/>
 
+At this point you can use Solr's {!geofilt}, {!bbox}, and {!geodist} as documented. You can also use
+{!gh_geofilt} like so:  so (args are in west,south,east,north order):
+  fq={!gh_geofilt sfield=store box="-98,35,-97,36"}
+For further info on gh_geofilt, see the well-documented source.
+
+CHANGES
+
+ 1.0.4: Fixed bug in which geohashes were returned from Solr xml responses instead of lat,lon. Enhanced README.txt
+        and Solr wiki.
+
+ 1.0.3: * exception text for the absent sfield local param;
+        * add cache enabling recommendation into README.txt (cache name is confusing a little)
+        * fix for UnsupportedOpEx on debugQuery=on for geodist func (but my toString() impl seems overcomplicated)
+
+ 1.0.2: (first public release)
