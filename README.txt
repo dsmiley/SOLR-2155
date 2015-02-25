@@ -1,3 +1,9 @@
+Summary:
+
+This is an old plug-in to Solr 3.x to add spatial filtering on multi-valued fields, and distance-sorting on
+these multi-valued fields as well.  In Solr 4.x and beyond, you use the so-called "RPT" field type to get
+the same capabilities.
+
 Author: David Smiley
 
 You may find supplemental instructions online:
